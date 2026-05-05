@@ -152,20 +152,15 @@ function typeTagToBytes(type) {
 function buildProgrammableMoveCallBytes({
   packageId,
   module,
-  function: functionName,
-  functionName: namedFunction,
+  functionName,
   typeArguments = [],
   sharedObjects = [],
   arguments: moveArguments,
 }) {
-  if (functionName && namedFunction && functionName !== namedFunction) {
-    throw new Error(`Conflicting move function names: function="${functionName}" vs functionName="${namedFunction}"`)
-  }
-  const moveFunction = functionName || namedFunction
-  if (!packageId || !module || !moveFunction) throw new Error('Missing packageId, module, or functionName')
+  if (!packageId || !module || !functionName) throw new Error('Missing packageId, module, or functionName')
 
   const moduleBytes = textToBytes(module)
-  const functionBytes = textToBytes(moveFunction)
+  const functionBytes = textToBytes(functionName)
   const args = moveArguments || sharedObjects.map((_, i) => ({ Input: i }))
   const inputCount = sharedObjects.length
   const bytes = [0, ...uleb128(sharedObjects.length)]
@@ -200,7 +195,16 @@ function buildProgrammableMoveCallBytes({
 }
 
 async function devInspectTransactionBlock(txBlockBytes, { sender = DUMMY_SENDER } = {}) {
-  return call('sui_devInspectTransactionBlock', [sender, Buffer.from(txBlockBytes).toString('base64')], { withMetadata: true })
+  const result = await call('sui_devInspectTransactionBlock', [sender, Buffer.from(txBlockBytes).toString('base64')], { withMetadata: true })
+  if (result?.effects?.status?.status !== 'success') throw new Error(`Sui devInspect failed: ${JSON.stringify(result, null, 2)}`)
+  return result
+}
+
+async function getInitialSharedVersion(objectId) {
+  const obj = await call('sui_getObject', [objectId, { showOwner: true }])
+  const version = obj?.owner?.Shared?.initial_shared_version
+  if (version === undefined) throw new Error(`Sui object ${objectId} is not a shared object`)
+  return version
 }
 
 async function queryEvents({ eventType, transform = i => i }) {
@@ -399,6 +403,7 @@ module.exports = {
   DUMMY_SENDER,
   buildProgrammableMoveCallBytes,
   devInspectTransactionBlock,
+  getInitialSharedVersion,
   parseStructTag,
   typeTagToBytes,
   hexToBytes,

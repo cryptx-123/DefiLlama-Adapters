@@ -1,6 +1,6 @@
 const { addUSDCBalance } = require("../helper/chain/stellar");
 const solana = require("../helper/solana");
-const suiTx = require("./suiTx");
+const sui = require("../helper/chain/sui");
 
 const data = require("./contracts");
 
@@ -10,10 +10,20 @@ const solanaTvl = async (api) => {
 }
 
 const suiTvl = async (api) => {
-  const suiData = data['sui'];
-  for (const token of suiData.tokens) {
-    const balance = await suiTx.getPoolTokenBalance(token.tokenAddress, suiData.bridgeAddress, suiData.bridgeId);
-    api.add(token.tokenAddress, balance);
+  const { bridgeAddress, bridgeId, tokens } = data['sui'];
+  const initialSharedVersion = await sui.getInitialSharedVersion(bridgeId);
+
+  for (const { tokenAddress } of tokens) {
+    const txBytes = sui.buildProgrammableMoveCallBytes({
+      packageId: bridgeAddress,
+      module: 'bridge_interface',
+      functionName: 'pool_balance',
+      typeArguments: [tokenAddress],
+      sharedObjects: [{ objectId: bridgeId, initialSharedVersion, mutable: false }],
+    });
+    const inspection = await sui.devInspectTransactionBlock(txBytes);
+    const [balanceBytes] = inspection.results.pop().returnValues.pop();
+    api.add(tokenAddress, sui.fromU64(balanceBytes).toString());
   }
 }
 
