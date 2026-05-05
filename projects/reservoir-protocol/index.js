@@ -9,6 +9,7 @@ const config = {
       '0x99E8903bdEFB9e44cd6A24B7f6F97dDd071549bc', // USUALUSDC+
       '0xb82749F316CB9c06F38587aBecF3EB1bC842CC93', // bbqUSDCreservoir
       '0xC5deA68CCe26c014BEC516CDA70c107c534a73C4', // bbqUSDC - Steakhouse High Yield Instant
+      '0x65078cfef8f7c07441661393eab6cb93b31db0dd', // steakUSDC Prime Instant V2
       // '0x31Eae643b679A84b37E3d0B4Bd4f5dA90fB04a61', - excluded RUSD because it is project's own token
       '0x86Ac8e29Be5ad83c611fE054Df20970d3b4f9BE0', // gtUSDC - Gauntlet USDC Prime old 2
     ],
