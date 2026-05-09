@@ -17,6 +17,9 @@ async function solanaTvl() {
 
 module.exports = {
   methodology: "Counts the tokens locked in the PowerFlow Bridge contracts.",
+  titan: {
+    tvl: () => ({}),
+  },
   ethereum: {
     tvl: sumTokensExport({
       owner: "0x9Be9C79f1d8bC09c5b9A6c312e360227Ddb57230",
